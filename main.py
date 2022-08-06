@@ -14,7 +14,7 @@ def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
 
 if __name__ == '__main__':
-    uvicorn.run('main:app', host='0.0.0.0', port=80)
+    uvicorn.run('main:app', host='0.0.0.0', port=8000)
 
 # from flask import Flask, jsonify, request
 # from flask_cors import CORS
