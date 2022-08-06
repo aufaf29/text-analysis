@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'text-analysis-service'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_37822BB8EA8E4687AAA43D0DB00C4E13 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_3283BC4701A040548CE806B9E7AEA402 }}
