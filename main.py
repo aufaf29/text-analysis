@@ -1,42 +1,49 @@
-from typing import Union
 from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
+class TweetRequest(BaseModel):
+    text: str
+    
+class ClassifyResponse(BaseModel):
+    label: str
+    score: float
+    
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.post(
+    "/hate-speech/predict", 
+    response_model=ClassifyResponse,
+    tags=["Hate Speech"], 
+    name="post_single_hate_speech_classifier", 
+    summary="Classify hate speech from single text",
+    description="Classify hate speech from single text"
+)
+def hate_speech_classifier(request: TweetRequest):
+    res = dict()
+    res["label"] = "undefined"
+    res["score"] = 0.99921
+    return res
 
-# if __name__ == '__main__':
-#     uvicorn.run('main:app', host='0.0.0.0', port=8000)
-
-# from flask import Flask, jsonify, request
-# from flask_cors import CORS
-
-# app = Flask(__name__)
-# cors = CORS(app)
-
-# @app.route("/", methods=["GET"])
-# def main():
-#     response = jsonify({'message': 'Please user /predict or /predict-multi with text as request.'})
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-#     return response
-
-# @app.route("/predict", methods=["POST"])
-# def predict():
-#     if request.method == "POST":
-#         response = jsonify({'label': "none"})
-#         response.headers.add('Access-Control-Allow-Origin', '*')
-#         return response
-        
-# @app.route("/predict-multi", methods=["POST"])
-# def predictx():
-#     if request.method == "POST":
-#         response = jsonify({'label': "none"})
-#         response.headers.add('Access-Control-Allow-Origin', '*')
-#         return response
+@app.post(
+    "/hate-speech-topic/predict", 
+    response_model=ClassifyResponse,
+    tags=["Hate Speech"], 
+    name="post_single_hate_speech_topic_classifier", 
+    summary="Classify hate speech with topic from single text",
+    description="Classify hate speech with topic from single text"
+)
+def hate_speech_topic_classifier(request: TweetRequest):
+    res = dict()
+    res["label"] = "undefined"
+    res["score"] = 0.99921
+    return res
 
