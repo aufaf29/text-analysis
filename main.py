@@ -11,12 +11,17 @@ dill._dill._reverse_typemap['ClassType'] = type
 class TweetRequest(BaseModel):
     text: str
     
+class ClassifyResponseLite(BaseModel):
+    label: str
+    
 class ClassifyResponse(BaseModel):
     label: str
     score: float
-    
-class ClassifyResponseLite(BaseModel):
+
+class ClassifyResponseExtra(BaseModel):
     label: str
+    score: float
+    category: str
     
 app = FastAPI()
 
@@ -27,6 +32,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+file =  open('model/hatespeech.pkl', 'rb')
+model_hs = dill.load(file)
+file.close()
+
+file =  open('model/hatespeech_topic.pkl', 'rb')
+model_hs_topic = dill.load(file)
+file.close()
 
 @app.post(
     "/hate-speech/predict", 
@@ -39,11 +52,7 @@ app.add_middleware(
 def hate_speech_classifier(request: TweetRequest):
     text = request.text
     
-    file =  open('model/hatespeech.pkl', 'rb')
-    model = dill.load(file)
-    file.close()
-    
-    pred_proba = model.predict_proba(pd.DataFrame({'text': [text]}))[0]
+    pred_proba = model_hs.predict_proba(pd.DataFrame({'text': [text]}))[0]
     
     res = dict()
     if (pred_proba >= 0.5):
@@ -66,11 +75,7 @@ def hate_speech_classifier(request: TweetRequest):
 def hate_speech_topic_classifier(request: TweetRequest):
     text = request.text
     
-    file =  open('model/hatespeech_topic.pkl', 'rb')
-    model = dill.load(file)
-    file.close()
-    
-    pred = model.predict(pd.DataFrame({'text': [text]}))[0]
+    pred = model_hs_topic.predict(pd.DataFrame({'text': [text]}))[0]
     
     classes = ['gender hatespeech', 'other hatespeech', 'physical hatespeech', 'race hatespeech', 'religion hatespeech']
     
@@ -79,3 +84,32 @@ def hate_speech_topic_classifier(request: TweetRequest):
     
     return res
 
+@app.post(
+    "/hate-speech-pipeline/predict", 
+    response_model=ClassifyResponseExtra,
+    tags=["Hate Speech"], 
+    name="post_single_hate_speech_pipeline_classifier", 
+    summary="Classify hate speech with pipeline from single text",
+    description="Classify hate speech with pipeline from single text"
+)
+def hate_speech_pipeline_classifier(request: TweetRequest):
+    text = request.text
+    
+    pred_proba = model_hs.predict_proba(pd.DataFrame({'text': [text]}))[0]
+    
+    res = dict()
+    if (pred_proba >= 0.5):
+        res["label"] = "non hatespeech"
+        res["score"] = int(pred_proba * 100)
+        res["category"] = "-"
+    else:      
+        res["label"] = "hatespeech"
+        res["score"] = 100 - int(pred_proba * 100)
+        
+        pred = model_hs_topic.predict(pd.DataFrame({'text': [text]}))[0]
+        
+        classes = ['gender hatespeech', 'other hatespeech', 'physical hatespeech', 'race hatespeech', 'religion hatespeech']
+        
+        res["category"] = classes[pred]
+    
+    return res
